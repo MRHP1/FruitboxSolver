@@ -1,6 +1,6 @@
 # Fruitbox Solver
 
-A Python-based interactive puzzle game inspired by the original "Fruitbox" web game, integrated with multiple Algorithm solvers (Greedy, BFS, DFS, Dijkstra) to automatically solve the puzzle and compare their performance.
+A Python-based interactive puzzle game inspired by the original "Fruitbox" web game, integrated with multiple Algorithm solvers (Greedy, DFS, Dijkstra) to automatically solve the puzzle and compare their performance.
 
 Built as a Quiz 2 Group Project for the Design and Analysis of Algorithms course.
 
@@ -64,10 +64,10 @@ The game window will open.
 
 During gameplay, a panel on the **right side** of the screen lets you test the AI solvers:
 
-| Button                                  | Function                                             |
-| --------------------------------------- | ---------------------------------------------------- |
-| **Greedy / BFS / DFS / Dijkstra** | Select which algorithm to use                        |
-| **Run Solver**                    | Solve the current board using the selected algorithm |
-| **Benchmark All**                 | Run all 4 algorithms and compare their performance   |
-| **Auto-Play**                     | Watch the solver execute its moves one by one        |
-| **Stop**                          | Cancel the auto-play                                 |
+| Button                             | Function                                             |
+| ---------------------------------- | ---------------------------------------------------- |
+| **Greedy / DFS / Dijkstra** | Select which algorithm to use                        |
+| **Run Solver**               | Solve the current board using the selected algorithm |
+| **Benchmark All**            | Run all 4 algorithms and compare their performance   |
+| **Auto-Play**                | Watch the solver execute its moves one by one        |
+| **Stop**                     | Cancel the auto-play                                 |
