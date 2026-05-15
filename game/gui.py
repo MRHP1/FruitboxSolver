@@ -15,8 +15,8 @@ STATE_PLAYING = 1
 STATE_GAME_OVER = 2
 
 PANEL_W = 220
-ALGO_LIST = ["greedy", "bfs", "dfs", "dijkstra"]
-ALGO_LABELS = {"greedy": "Greedy", "bfs": "BFS (Beam)", "dfs": "DFS", "dijkstra": "Dijkstra"}
+ALGO_LIST = ["greedy", "dfs", "dijkstra"]
+ALGO_LABELS = {"greedy": "Greedy", "dfs": "DFS", "dijkstra": "Dijkstra"}
 AUTO_MS = 500
 
 
