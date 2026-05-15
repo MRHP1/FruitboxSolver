@@ -1,4 +1,5 @@
 import sys
+import math
 import threading
 # pyrefly: ignore [missing-import]
 import pygame
@@ -14,8 +15,8 @@ STATE_PLAYING = 1
 STATE_GAME_OVER = 2
 
 PANEL_W = 220
-ALGO_LIST = ["greedy", "bfs", "dfs"]
-ALGO_LABELS = {"greedy": "Greedy", "bfs": "BFS (Beam)", "dfs": "DFS"}
+ALGO_LIST = ["greedy", "bfs", "dfs", "dijkstra"]
+ALGO_LABELS = {"greedy": "Greedy", "bfs": "BFS (Beam)", "dfs": "DFS", "dijkstra": "Dijkstra"}
 AUTO_MS = 500
 
 
@@ -501,8 +502,58 @@ class FruitboxGUI:
             btn.rect.update(bx, ya + idx * (bh + 6), bw, bh)
 
         if self.solver_running:
-            t = self.font_xs.render("Thinking...", True, (255, 200, 50))
-            self.screen.blit(t, (bx, self._btn_run.rect.y + 8))
+            # ── Bouncing Dots ─────────────────────────────────────────────
+            slot    = self._btn_run.rect          # same slot as Run button
+            t_ms    = pygame.time.get_ticks()
+
+            # "Thinking..." label above the dots
+            lbl = self.font_xs.render("Thinking...", True, (80, 240, 120))
+            lbl_x = slot.x + (slot.w - lbl.get_width()) // 2
+            lbl_y = slot.y + 2
+            self.screen.blit(lbl, (lbl_x, lbl_y))
+
+            # 3 dots, staggered by 120° (2π/3)
+            n_dots   = 3
+            dot_r    = 5                          # base radius
+            period   = 600                        # ms per full bounce
+            bounce_h = 8                          # max lift in px
+            cy_base  = slot.y + slot.h - dot_r - 4   # resting y centre
+
+            spacing  = slot.w // (n_dots + 1)
+            for i in range(n_dots):
+                phase   = (t_ms / period + i / n_dots) % 1.0   # 0.0 → 1.0
+                # sine: 0 at bottom, 1 at top  →  -sin keeps peak at phase=0.25
+                lift    = int(bounce_h * max(0.0, math.sin(phase * math.pi * 2)))
+                # size pulse: slightly bigger at peak
+                r       = dot_r + int(2 * max(0.0, math.sin(phase * math.pi * 2)))
+                # colour: brighten at peak
+                green   = int(160 + 80 * max(0.0, math.sin(phase * math.pi * 2)))
+                colour  = (50, green, 90)
+
+                cx_dot = slot.x + spacing * (i + 1)
+                cy_dot = cy_base - lift
+                pygame.draw.circle(self.screen, colour, (cx_dot, cy_dot), r)
+                # inner highlight
+                pygame.draw.circle(self.screen, (min(255, colour[0]+60),
+                                                 min(255, colour[1]+60),
+                                                 min(255, colour[2]+60)),
+                                   (cx_dot - 1, cy_dot - 1), max(1, r - 2))
+
+            # Benchmark button dimmed while running
+            bench_surf = pygame.Surface(
+                (self._btn_bench.rect.w, self._btn_bench.rect.h), pygame.SRCALPHA
+            )
+            pygame.draw.rect(bench_surf, (40, 45, 65),
+                             bench_surf.get_rect(), border_radius=8)
+            pygame.draw.rect(bench_surf, (60, 65, 80),
+                             bench_surf.get_rect(), 1, border_radius=8)
+            dim_lbl = self.font_xs.render("⏱  Benchmark All", True, (70, 75, 90))
+            bench_surf.blit(
+                dim_lbl,
+                ((bench_surf.get_width()  - dim_lbl.get_width())  // 2,
+                 (bench_surf.get_height() - dim_lbl.get_height()) // 2),
+            )
+            self.screen.blit(bench_surf, self._btn_bench.rect.topleft)
         else:
             self._btn_run.draw(self.screen, self.font_xs)
             self._btn_bench.draw(self.screen, self.font_xs)
