@@ -29,9 +29,18 @@ class Timer:
         return max(0.0, self.total - elapsed)
 
     def is_expired(self) -> bool:
+        if self.total < 0:
+            return False
         return self.remaining() <= 0
 
     def display(self) -> str:
+        if self.total < 0:
+            if self._start is None:
+                return "0:00"
+            elapsed = int(time.time() - self._start)
+            m, s = divmod(elapsed, 60)
+            return f"{m}:{s:02d}"
+            
         rem = int(self.remaining())
         m, s = divmod(rem, 60)
         return f"{m}:{s:02d}"

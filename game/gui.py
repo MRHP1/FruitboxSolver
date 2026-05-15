@@ -132,9 +132,14 @@ class FruitboxGUI:
 
     def _init_menu(self):
         cx = S.WINDOW_WIDTH // 2
-        self.input_rows = InputBox(cx + 20, 300, 100, 40, str(S.DEFAULT_ROWS))
-        self.input_cols = InputBox(cx + 20, 360, 100, 40, str(S.DEFAULT_COLS))
-        self.btn_play = Button(cx - 120, 460, 240, 50, "Play Game")
+        self.input_rows = InputBox(cx - 100, 310, 60, 40, str(S.DEFAULT_ROWS))
+        self.input_cols = InputBox(cx + 40, 310, 60, 40, str(S.DEFAULT_COLS))
+        
+        self.time_opts = [(60, "1 Minute"), (180, "3 Minutes"), (-1, "No Limit")]
+        self.time_opt_idx = 0
+        self.btn_time = Button(cx - 120, 380, 240, 50, f"Time: {self.time_opts[self.time_opt_idx][1]}")
+        
+        self.btn_play = Button(cx - 120, 450, 240, 50, "Play Game")
 
     def _draw_menu(self):
         self.screen.fill(S.BG_COLOR)
@@ -154,17 +159,18 @@ class FruitboxGUI:
 
 
         lbl_r = self.font_sm.render("Rows:", True, S.TEXT_COLOR)
-        lbl_c = self.font_sm.render("Cols:", True, S.TEXT_COLOR)
-        self.screen.blit(lbl_r, (cx - 70, 308))
-        self.screen.blit(lbl_c, (cx - 70, 368))
+        lbl_c = self.font_sm.render("|   Cols:", True, S.TEXT_COLOR)
+        self.screen.blit(lbl_r, (cx - 160, 318))
+        self.screen.blit(lbl_c, (cx - 30, 318))
 
-
-        self.input_rows.rect.x = cx + 20
-        self.input_cols.rect.x = cx + 20
+        self.input_rows.rect.x = cx - 100
+        self.input_cols.rect.x = cx + 40
+        self.btn_time.rect.x = cx - 120
         self.btn_play.rect.x = cx - 120
 
         self.input_rows.draw(self.screen, self.font_sm)
         self.input_cols.draw(self.screen, self.font_sm)
+        self.btn_time.draw(self.screen, self.font_md)
         self.btn_play.draw(self.screen, self.font_md)
 
         hint = self.font_xs.render(
@@ -177,6 +183,9 @@ class FruitboxGUI:
     def _menu_event(self, event):
         self.input_rows.handle_event(event)
         self.input_cols.handle_event(event)
+        if self.btn_time.handle_event(event):
+            self.time_opt_idx = (self.time_opt_idx + 1) % len(self.time_opts)
+            self.btn_time.label = f"Time: {self.time_opts[self.time_opt_idx][1]}"
         if self.btn_play.handle_event(event):
             self._start_game()
 
@@ -196,8 +205,10 @@ class FruitboxGUI:
     def _start_game(self):
         rows, cols = self._get_grid_size()
         self.board = Board(rows, cols)
+        self.initial_board_grid = self.board.get_grid_2d()
         self.logic = GameLogic(self.board)
-        self.timer = Timer(S.TIMER_SECONDS)
+        time_sec = self.time_opts[self.time_opt_idx][0]
+        self.timer = Timer(time_sec)
         self.timer.start()
         self.sel_start = self.sel_end = None
         self.dragging = False
@@ -393,6 +404,16 @@ class FruitboxGUI:
             self.pending_moves = []
             self._highlight = None
             return
+        if self._btn_reset.handle_event(event):
+            self.auto_playing = False
+            self.pending_moves = []
+            self.solver_result = None
+            self._highlight = None
+            self.board = Board(self.board.rows, self.board.cols, grid=self.initial_board_grid)
+            self.logic = GameLogic(self.board)
+            if self.timer:
+                self.timer.start()
+            return
 
         if self.auto_playing:
             return
@@ -466,10 +487,11 @@ class FruitboxGUI:
         self._algo_btns: dict[str, Button] = {
             a: Button(0, 0, bw, bh, ALGO_LABELS[a]) for a in ALGO_LIST
         }
-        self._btn_run = Button(0, 0, bw, bh, "\u25b6  Run Solver")
-        self._btn_bench = Button(0, 0, bw, bh, "\u23f1  Benchmark All")
-        self._btn_autoplay = Button(0, 0, bw, bh, "\u23e9  Auto-Play")
-        self._btn_stop = Button(0, 0, bw, bh, "\u23f9  Stop", color=(80, 30, 30))
+        self._btn_run = Button(0, 0, bw, bh, "Run Solver")
+        self._btn_bench = Button(0, 0, bw, bh, "Benchmark All")
+        self._btn_autoplay = Button(0, 0, bw, bh, "Auto-Play")
+        self._btn_reset = Button(0, 0, bw, bh, "Reset Round", color=(100, 80, 20))
+        self._btn_stop = Button(0, 0, bw, bh, "Stop", color=(80, 30, 30))
 
     def _draw_solver_panel(self):
         w, h = self.screen.get_size()
@@ -477,7 +499,7 @@ class FruitboxGUI:
         pygame.draw.rect(self.screen, (28, 33, 52), (px, 0, PANEL_W, h))
         pygame.draw.line(self.screen, S.ACCENT, (px, 0), (px, h), 1)
 
-        title = self.font_sm.render("AI SOLVER", True, S.ACCENT_LIGHT)
+        title = self.font_sm.render("Algorithm Solver", True, S.ACCENT_LIGHT)
         self.screen.blit(title, (px + (PANEL_W - title.get_width()) // 2, 12))
         pygame.draw.line(self.screen, S.ACCENT, (px + 8, 36), (w - 8, 36), 1)
 
@@ -498,7 +520,7 @@ class FruitboxGUI:
 
         ya = by + len(ALGO_LIST) * (bh + 6) + 8
         for idx, btn in enumerate([self._btn_run, self._btn_bench,
-                                    self._btn_autoplay, self._btn_stop]):
+                                    self._btn_autoplay, self._btn_reset, self._btn_stop]):
             btn.rect.update(bx, ya + idx * (bh + 6), bw, bh)
 
         if self.solver_running:
@@ -560,6 +582,7 @@ class FruitboxGUI:
 
         self._btn_autoplay.color = (30, 100, 60) if self.auto_playing else S.BUTTON_COLOR
         self._btn_autoplay.draw(self.screen, self.font_xs)
+        self._btn_reset.draw(self.screen, self.font_xs)
         self._btn_stop.draw(self.screen, self.font_xs)
 
         ry = self._btn_stop.rect.bottom + 10
