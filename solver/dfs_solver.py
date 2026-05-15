@@ -1,6 +1,8 @@
+import sys
 import time
 from solver.graph import BoardGraph, apply_move_to_grid
 
+sys.setrecursionlimit(20000)
 
 def solve_dfs(
     grid: list[list[int]],
